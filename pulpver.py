@@ -1,7 +1,3 @@
-# ----------------------------------------------------------------------
-#  Inkjet-Printed Electronics – “Short” MILP (PuLP version)
-#  Implements Eqs. (2)…(10) from the conference formulation
-# ----------------------------------------------------------------------
 
 import math
 import pulp

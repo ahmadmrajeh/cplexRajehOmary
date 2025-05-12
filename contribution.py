@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# ---------------------------------------------------------------------------
-#  Inkjet-Printed Electronics – VARIABLE-LAYER MILP (PuLP)
-#  Implements Eqs. (2)…(10)  + layer-penalty  c_layer·Σ yℓ
-#
-#  © 2025  Q. Alomari, A. Rajeh — feel free to reuse with citation
-# ---------------------------------------------------------------------------
 
 import math, time
 from typing import Optional

@@ -1,19 +1,17 @@
 
 
-# ───────────────────────────── Imports ────────────────────────────────────────
 import math
 from collections import defaultdict
 from typing import Optional
 
 from docplex.mp.model import Model
 
-# ───────────────── Gaussian drying kernel  –Eq.(8) constant ∆s ───────────────
+# Gaussian drying kernel  –Eq.(8) constant ∆s
 def gaussian_pdf(dist_mm: float, sigma: float = 0.5) -> float:
     """fσ(d) = (1/σ√(2π)) · exp(−d²/(2σ²))   (paper Eq.(7) kernel)"""
     return (1.0 / (sigma * math.sqrt(2.0 * math.pi))
             * math.exp(-dist_mm ** 2 / (2.0 * sigma ** 2)))
 
-# ─────────────────────────── Core MILP builder ───────────────────────────────
 def build_and_solve_milp_short(*,  # force keyword args
                                object_bounds_mm: dict,  # {id:(xmin,xmax,ymin,ymax)}
                                laplace_pairs: list,  # [(small,big), …]
@@ -22,7 +20,7 @@ def build_and_solve_milp_short(*,  # force keyword args
                                max_layers: int = 10,
                                c_print: Optional[float] = None,
                                c_dry: float = 512.0):
-    # 1 ── constants & helper ranges ------------------------------------------------
+    # 1 ── constants & helper ranges
     c_print = 24.0 * tile_size_mm if c_print is None else c_print
     sigma = 0.5
     objs = list(object_bounds_mm)
@@ -36,7 +34,7 @@ def build_and_solve_milp_short(*,  # force keyword args
     X = range(NX)
     Y = range(NY)
 
-    # 2 ── pre-compute helpers  p_mi  and  Δs_{oi→Tm,n} ----------------------------
+    # 2 ── pre-compute helpers  p_mi  and  Δs_{oi→Tm,n}
     # pmi = 1 if object i intersects row m
     pmi = defaultdict(int)              # key (m,i) → 0/1
     Δs  = defaultdict(float)            # key (i,m,n) → gaussian weight
@@ -52,7 +50,7 @@ def build_and_solve_milp_short(*,  # force keyword args
 
     BIG_M = len(objs)  # “sufficiently large” for Eq.(5)
 
-    # 3 ── model & decision variables ---------------------------------------------
+    # 3 ── model & decision variables
     mdl = Model(name="MfgCycleTime_Short", log_output=False)
 
     # Eq.(2)  q_{i,j}
@@ -76,7 +74,7 @@ def build_and_solve_milp_short(*,  # force keyword args
     # Eq.(10) v_layer_j
     v_layer = mdl.continuous_var_dict(L, lb=0, name="vLayer")
 
-    # 4 ── constraints ------------------------------------------------------------
+    # 4 ── constraints -
     # (2) assignment – each object printed exactly once
     for i in objs:
         mdl.add_constraint(mdl.sum(q[i,j] for j in L) == 1,
@@ -133,7 +131,6 @@ def build_and_solve_milp_short(*,  # force keyword args
                     c_print * v_print[m,j] + c_dry * v_dry[m,n,j],
                     ctname=f"Eq9_rowScore_{m}_{n}_{j}")
 
-    # (10) layer score dominates row scores
     for j in L:
         for m in Y:
             mdl.add_constraint(v_layer[j] >= v_row[m,j],
@@ -145,7 +142,6 @@ def build_and_solve_milp_short(*,  # force keyword args
     # 6 ── solve
     mdl.solve()
 
-    # 7 ── compact results --------------------------------------------------------
     assignment   = {i: next(j for j in L if q[i,j].solution_value > .5)
                     for i in objs}
     layer_scores = [v_layer[j].solution_value or 0.0 for j in L]
@@ -154,7 +150,7 @@ def build_and_solve_milp_short(*,  # force keyword args
 
     return assignment, layer_scores, used_layers, total_score
 if __name__ == "__main__":
-    # ── Case 1 : toy 3-object (Fig. 4 in the paper) ─────────────────────────
+
     toy_bounds = {0: (0, 2, 0, 2),
                   1: (0, 4, 2, 4),
                   2: (2, 4, 4, 6)}
@@ -164,20 +160,19 @@ if __name__ == "__main__":
         proximity_pairs=[(1, 2)],
         tile_size_mm=1.0,
         max_layers=4)
-    print("\nToy example  →", toy_out[:4])     # assignment, scores, layers, total
+    print("\nToy example  →", toy_out[:4])
 
-    # ── Case 2 : micro-heater (stub geometry) ────────────────────────────────
     heater_bounds = {0: (0, 30, 0, 5), 1: (0, 30, 5.5, 10.5),
                      2: (0, 30, 11, 16), 3: (0, 30, 16.5, 21.5)}
     heater_out = build_and_solve_milp_short(
         object_bounds_mm=heater_bounds,
         laplace_pairs=[],
         proximity_pairs=[],
-        tile_size_mm=math.sqrt(30*22/1e4),  # ≈0.26 mm so the mesh has ≈10 k tiles
+        tile_size_mm=math.sqrt(30*22/1e4),
         max_layers=6)
     print("Micro-heater  →", heater_out[:4])
 
-    # ── Case 3 : digital-microfluidics (stub geometry) ───────────────────────
+
     dmf_bounds = {0: (0, 74.9, 0, 3.3),
                   1: (0, 74.9, 3.9, 7.2),
                   2: (0, 74.9, 7.8, 11.1)}

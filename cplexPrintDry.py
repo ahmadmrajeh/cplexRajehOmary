@@ -1,12 +1,3 @@
-"""
-===============================================================================
- Inkjet‑Printed Electronics – MILP reference (CPLEX+DOcplex, fully commented)
- -------------------------------------------------------------------------------
- • Exactly reproduces Eqs.22–29 from the TCAD‑2025 paper.
- • Every line is documented; formula lines cite the paper (e.g. “Eq.22”).
- • Descriptive variable names (no 1‑letter symbols).
-===============================================================================
-"""
 
 # ───────────────────────────── Imports ────────────────────────────────────────
 import math  # √, exp, hypot, π              » std‑math
